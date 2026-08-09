@@ -22,7 +22,7 @@ export const TIMED_TAGS: string[] = ["Work", "Health"];
 type TaskDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initial?: TaskDraft;
+  initial?: TaskDraft | undefined;
   dayName: string;
   onSubmit: (draft: TaskDraft) => void;
 };
