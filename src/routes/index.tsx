@@ -84,7 +84,7 @@ function Weeky() {
   const [draft, setDraft] = useState("");
   const [draftTag, setDraftTag] = useState<string>("General");
 
-  const day = week[activeIndex];
+  const day = week[activeIndex] ?? week[0]!;
 
   const weekStats = useMemo(() => {
     const all = week.flatMap((d) => d.tasks);
