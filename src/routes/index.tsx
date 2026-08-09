@@ -1,19 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
+  ArrowLeft,
+  ArrowRight,
   Check,
   ChevronLeft,
   ChevronRight,
   Flame,
+  Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
 import { ProgressRing } from "@/components/weeky/ProgressRing";
+import { TaskDialog, type TaskDraft } from "@/components/weeky/TaskDialog";
 
-type Task = { id: string; title: string; tag: string; done: boolean };
+type Task = {
+  id: string;
+  title: string;
+  tag: string;
+  done: boolean;
+  description?: string;
+  time?: string;
+};
 type DayPlan = { key: string; name: string; date: string; hijri: string; tasks: Task[] };
-
-const TAGS = ["General", "Work", "Health", "Home"] as const;
 
 const initialWeek: DayPlan[] = [
   {
@@ -81,8 +90,8 @@ export const Route = createFileRoute("/")({
 function Weeky() {
   const [week, setWeek] = useState<DayPlan[]>(initialWeek);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [draft, setDraft] = useState("");
-  const [draftTag, setDraftTag] = useState<string>("General");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const day = week[activeIndex] ?? week[0]!;
 
@@ -116,23 +125,38 @@ function Weeky() {
       w.map((d, i) => (i === activeIndex ? { ...d, tasks: d.tasks.filter((t) => t.id !== id) } : d)),
     );
 
-  const add = () => {
-    const title = draft.trim();
-    if (!title) return;
+  const move = (id: string, dir: -1 | 1) => {
+    const target = (activeIndex + dir + week.length) % week.length;
+    setWeek((w) => {
+      const task = w[activeIndex]?.tasks.find((t) => t.id === id);
+      if (!task) return w;
+      return w.map((d, i) => {
+        if (i === activeIndex) return { ...d, tasks: d.tasks.filter((t) => t.id !== id) };
+        if (i === target) return { ...d, tasks: [...d.tasks, task] };
+        return d;
+      });
+    });
+  };
+
+  const editing = editingId ? day.tasks.find((t) => t.id === editingId) : undefined;
+
+  const submitTask = (draft: TaskDraft) => {
     setWeek((w) =>
-      w.map((d, i) =>
-        i === activeIndex
-          ? {
-              ...d,
-              tasks: [
-                ...d.tasks,
-                { id: crypto.randomUUID(), title, tag: draftTag, done: false },
-              ],
-            }
-          : d,
-      ),
+      w.map((d, i) => {
+        if (i !== activeIndex) return d;
+        if (editingId) {
+          return {
+            ...d,
+            tasks: d.tasks.map((t) => (t.id === editingId ? { ...t, ...draft } : t)),
+          };
+        }
+        return {
+          ...d,
+          tasks: [...d.tasks, { id: crypto.randomUUID(), done: false, ...draft }],
+        };
+      }),
     );
-    setDraft("");
+    setEditingId(null);
   };
 
   return (
@@ -235,36 +259,81 @@ function Weeky() {
           {day.tasks.map((task) => (
             <li
               key={task.id}
-              className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3.5"
+              className="rounded-2xl border border-border bg-surface px-4 py-3.5"
             >
-              <button
-                aria-label={task.done ? "Mark incomplete" : "Mark complete"}
-                onClick={() => toggle(task.id)}
-                className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg border transition-colors ${
-                  task.done ? "border-mint bg-mint" : "border-border bg-surface-2"
-                }`}
-              >
-                {task.done ? <Check className="h-3.5 w-3.5 text-primary-foreground" /> : null}
-              </button>
-              <div className="min-w-0">
-                <p
-                  className={`truncate text-sm font-semibold ${
-                    task.done ? "text-muted-foreground line-through" : ""
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <div className="min-w-0">
+                  <p
+                    className={`truncate text-sm font-semibold ${
+                      task.done ? "text-muted-foreground line-through" : ""
+                    }`}
+                  >
+                    {task.title}
+                  </p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {task.tag}
+                    </span>
+                    {task.time ? (
+                      <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-semibold text-mint">
+                        {task.time}
+                      </span>
+                    ) : null}
+                  </div>
+                  {task.description ? (
+                    <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground">
+                      {task.description}
+                    </p>
+                  ) : null}
+                </div>
+                <button
+                  aria-label="Delete task"
+                  onClick={() => remove(task.id)}
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-3 flex items-center gap-1.5">
+                <button
+                  aria-label="Move to previous day"
+                  onClick={() => move(task.id, -1)}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface-2 text-muted-foreground"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+                <button
+                  aria-label="Move to next day"
+                  onClick={() => move(task.id, 1)}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface-2 text-muted-foreground"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button
+                  aria-label="Edit task"
+                  onClick={() => {
+                    setEditingId(task.id);
+                    setDialogOpen(true);
+                  }}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface-2 text-muted-foreground"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  aria-label={task.done ? "Mark incomplete" : "Mark complete"}
+                  onClick={() => toggle(task.id)}
+                  className={`ml-auto grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition-colors ${
+                    task.done ? "border-mint bg-mint" : "border-border bg-surface-2"
                   }`}
                 >
-                  {task.title}
-                </p>
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  {task.tag}
-                </span>
+                  <Check
+                    className={`h-4 w-4 ${
+                      task.done ? "text-primary-foreground" : "text-muted-foreground"
+                    }`}
+                  />
+                </button>
               </div>
-              <button
-                aria-label="Delete task"
-                onClick={() => remove(task.id)}
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
             </li>
           ))}
           {day.tasks.length === 0 ? (
@@ -276,36 +345,38 @@ function Weeky() {
       </section>
 
       <div className="fixed inset-x-0 bottom-0 mx-auto w-full max-w-md border-t border-border bg-background/85 px-5 pb-6 pt-3 backdrop-blur-xl">
-        <div className="flex gap-1.5 overflow-x-auto pb-2">
-          {TAGS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setDraftTag(t)}
-              className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-widest transition-colors ${
-                draftTag === t ? "bg-accent text-accent-foreground" : "bg-surface-2 text-muted-foreground"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && add()}
-            placeholder={`Add to ${day.name}…`}
-            className="min-w-0 flex-1 rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-hidden placeholder:text-muted-foreground focus:border-mint"
-          />
-          <button
-            aria-label="Add task"
-            onClick={add}
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-mint text-primary-foreground glow-mint"
-          >
-            <Plus className="h-5 w-5" />
-          </button>
-        </div>
+        <button
+          onClick={() => {
+            setEditingId(null);
+            setDialogOpen(true);
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-mint px-4 py-3.5 text-sm font-bold text-primary-foreground glow-mint"
+        >
+          <Plus className="h-5 w-5" />
+          Add task
+        </button>
       </div>
+
+      <TaskDialog
+        open={dialogOpen}
+        onOpenChange={(o) => {
+          setDialogOpen(o);
+          if (!o) setEditingId(null);
+        }}
+        dayName={day.name}
+        initial={
+          editing
+            ? {
+                title: editing.title,
+                description: editing.description ?? "",
+                tag: editing.tag,
+                time: editing.time ?? "",
+              }
+            : undefined
+        }
+        onSubmit={submitTask}
+      />
+
     </main>
   );
 }
