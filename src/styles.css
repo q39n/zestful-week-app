@@ -152,5 +152,25 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 }
+
+@utility glow-mint {
+  box-shadow: 0 10px 40px -12px color-mix(in oklab, var(--mint) 45%, transparent);
+}
+
+@utility card-elev {
+  box-shadow: 0 1px 0 0 color-mix(in oklab, white 6%, transparent) inset,
+    0 18px 40px -24px oklch(0 0 0 / 0.8);
+}
+
