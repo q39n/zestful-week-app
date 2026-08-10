@@ -164,6 +164,14 @@ function Weeky() {
     setActiveIndex(index ?? 0);
   };
 
+  if (!hydrated) {
+    return (
+      <main className="mx-auto min-h-screen w-full max-w-md bg-background px-5 pb-32 pt-8">
+        <h1 className="truncate font-display text-3xl font-extrabold">Weeky</h1>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background px-5 pb-32 pt-8">
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
