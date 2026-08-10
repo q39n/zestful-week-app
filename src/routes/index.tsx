@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -87,6 +87,9 @@ function Weeky() {
   const [activeIndex, setActiveIndex] = useState(today.getDay());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => setHydrated(true), []);
 
   const { year, week } = weekInfo(weekStart);
 
@@ -160,6 +163,14 @@ function Weeky() {
     setWeekStart(start);
     setActiveIndex(index ?? 0);
   };
+
+  if (!hydrated) {
+    return (
+      <main className="mx-auto min-h-screen w-full max-w-md bg-background px-5 pb-32 pt-8">
+        <h1 className="truncate font-display text-3xl font-extrabold">Weeky</h1>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background px-5 pb-32 pt-8">
