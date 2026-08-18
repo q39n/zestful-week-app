@@ -244,6 +244,13 @@ function Weeky() {
         </div>
       </section>
 
+      <section className="mt-6">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Widget preview
+        </p>
+        <TaskWidget tasks={day.tasks} dayName={day.name} onToggle={toggle} />
+      </section>
+
       <section className="mt-7">
         <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
           <button
