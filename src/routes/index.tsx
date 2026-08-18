@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ProgressRing } from "@/components/weeky/ProgressRing";
 import { TaskDialog, type TaskDraft } from "@/components/weeky/TaskDialog";
+import { TaskWidget } from "@/components/weeky/TaskWidget";
 import { WeekPicker } from "@/components/weeky/WeekPicker";
 import {
   addDays,
@@ -242,6 +243,13 @@ function Weeky() {
             );
           })}
         </div>
+      </section>
+
+      <section className="mt-6">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Widget preview
+        </p>
+        <TaskWidget tasks={day.tasks} dayName={day.name} onToggle={toggle} />
       </section>
 
       <section className="mt-7">
