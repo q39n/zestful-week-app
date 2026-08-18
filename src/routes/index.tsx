@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { ProgressRing } from "@/components/weeky/ProgressRing";
 import { TaskDialog, type TaskDraft } from "@/components/weeky/TaskDialog";
+import { TaskWidget } from "@/components/weeky/TaskWidget";
 import { WeekPicker } from "@/components/weeky/WeekPicker";
 import {
   addDays,
